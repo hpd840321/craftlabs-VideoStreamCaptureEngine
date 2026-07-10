@@ -4,6 +4,7 @@ APP=engine
 CMD_DIR=./cmd/engine
 
 build:
+	cp -r web/dist cmd/engine/dist 2>/dev/null || true
 	go build -o $(CMD_DIR)/$(APP) $(CMD_DIR)
 
 run: build

@@ -10,6 +10,7 @@ import (
 type DuplicateFilter struct {
 	threshold int
 	lastHash  uint64
+	hasLast   bool
 	mu        sync.Mutex
 }
 
@@ -25,11 +26,12 @@ func (d *DuplicateFilter) Apply(frame image.Image, meta FrameMeta) (FilteredFram
 	d.mu.Lock()
 	defer d.mu.Unlock()
 
-	if d.lastHash != 0 && hammingDistance(hash, d.lastHash) <= d.threshold {
+	if d.hasLast && hammingDistance(hash, d.lastHash) <= d.threshold {
 		return FilteredFrame{}, FilterDrop
 	}
 
 	d.lastHash = hash
+	d.hasLast = true
 	return FilteredFrame{Image: frame, Meta: meta, Score: 1.0}, FilterPass
 }
 

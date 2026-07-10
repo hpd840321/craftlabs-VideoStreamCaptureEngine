@@ -18,7 +18,7 @@ import (
 	"github.com/craftlabs/video-stream-capture-engine/internal/manager"
 )
 
-//go:embed web/dist/*
+//go:embed dist
 var webAssets embed.FS
 
 func main() {
@@ -47,7 +47,7 @@ func main() {
 	})
 
 	// Serve embedded frontend SPA
-	distFS, err := fs.Sub(webAssets, "web/dist")
+	distFS, err := fs.Sub(webAssets, "dist")
 	if err != nil {
 		slog.Warn("frontend not embedded, serving API only", "error", err)
 	} else {

@@ -3,6 +3,7 @@ package decoder
 import (
 	"fmt"
 	"image"
+	"image/color"
 	"io"
 )
 
@@ -40,7 +41,7 @@ func (r *RawVideoReader) ReadFrame(rd io.Reader) (image.Image, error) {
 			b := buf[offset]
 			g := buf[offset+1]
 			r_ := buf[offset+2]
-			img.SetRGBA(x, y, image.RGBA{R: r_, G: g, B: b, A: 255})
+			img.SetRGBA(x, y, color.RGBA{R: r_, G: g, B: b, A: 255})
 		}
 	}
 
