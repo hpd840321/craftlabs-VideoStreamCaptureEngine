@@ -1,0 +1,60 @@
+# VideoStreamCaptureEngine Configuration Example
+
+engine:
+  max_concurrent_starts: 5
+  shutdown_timeout: 30s
+  health_check_interval: 10s
+  health_check_timeout: 30s
+
+output:
+  backend: kafka
+  kafka:
+    brokers:
+      - "10.0.1.10:9092"
+      - "10.0.1.11:9092"
+    topic_prefix: "video-frames"
+    max_message_bytes: 1048576
+    required_acks: 1
+    compression: "snappy"
+  serializer:
+    format: "jpeg"
+    quality: 85
+
+database:
+  host: "your-postgres-host"
+  port: 5432
+  user: "admin"
+  password: "DevEnvSuperSecret123!"
+  dbname: "capture_engine"
+  sslmode: "disable"
+
+streams:
+  - id: "gate-north"
+    rtsp_url: "rtsp://admin:password@10.0.2.101:554/stream1"
+    capture_fps: 25
+    decode_scale: "1920x1080"
+    output_topic: "gate-north"
+    group: "园区-北门"
+    restart:
+      max_retries: 20
+      backoff_initial: 1s
+      backoff_max: 60s
+      backoff_factor: 2.0
+    filters:
+      - type: "duplicate"
+        params:
+          threshold: 10
+      - type: "noop"
+
+  - id: "lobby-main"
+    rtsp_url: "rtsp://admin:password@10.0.2.102:554/stream1"
+    capture_fps: 15
+    decode_scale: "1280x720"
+    group: "园区-北门"
+    restart:
+      max_retries: 20
+      backoff_initial: 1s
+      backoff_max: 60s
+      backoff_factor: 2.0
+    filters:
+      - type: "noop"

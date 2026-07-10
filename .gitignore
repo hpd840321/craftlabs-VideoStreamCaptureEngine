@@ -1,0 +1,23 @@
+# Binaries
+/cmd/engine/engine
+*.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+/dist/
+/node_modules/
+
+# Brainstorm artifacts
+.superpowers/
+
+# Env
+.env
+*.local
