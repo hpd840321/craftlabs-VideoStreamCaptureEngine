@@ -66,6 +66,7 @@ type StreamConfig struct {
 	Group       string        `yaml:"group"`
 	Restart     RestartPolicy `yaml:"restart"`
 	Filters     []FilterSpec  `yaml:"filters"`
+	Tracker     TrackerSpec   `yaml:"tracker"`
 
 	// Phase 2 reserved (ignored in Phase 1)
 	PipeFormat  string `yaml:"pipe_format"`
@@ -81,6 +82,11 @@ type RestartPolicy struct {
 }
 
 type FilterSpec struct {
+	Type   string                 `yaml:"type"`
+	Params map[string]interface{} `yaml:"params"`
+}
+
+type TrackerSpec struct {
 	Type   string                 `yaml:"type"`
 	Params map[string]interface{} `yaml:"params"`
 }

@@ -2,6 +2,7 @@ package decoder
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"image"
 	"log/slog"
@@ -128,6 +129,16 @@ func (w *DecoderWorker) processFrame(img image.Image, ts time.Time) error {
 	})
 	if err != nil {
 		return fmt.Errorf("serialize frame: %w", err)
+	}
+
+	// Enrich metadata with tracker detections
+	if dets := w.pipeline.Detections(); len(dets) > 0 {
+		if outFrame.Metadata == nil {
+			outFrame.Metadata = make(map[string]string)
+		}
+		data, _ := json.Marshal(dets)
+		outFrame.Metadata["detections"] = string(data)
+		outFrame.Metadata["detection_count"] = fmt.Sprintf("%d", len(dets))
 	}
 
 	return w.output.Write(outFrame)

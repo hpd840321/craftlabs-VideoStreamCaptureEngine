@@ -10,6 +10,7 @@ import (
 	"github.com/craftlabs/video-stream-capture-engine/internal/decoder"
 	"github.com/craftlabs/video-stream-capture-engine/internal/filter"
 	"github.com/craftlabs/video-stream-capture-engine/internal/output"
+	"github.com/craftlabs/video-stream-capture-engine/internal/tracker"
 )
 
 type StreamManager struct {
@@ -134,6 +135,14 @@ func (m *StreamManager) buildPipeline(cfg config.StreamConfig) *filter.FilterPip
 
 	for _, fs := range cfg.Filters {
 		switch fs.Type {
+		case "blur":
+			threshold := 100.0
+			if t, ok := fs.Params["threshold"]; ok {
+				if tFloat, ok := t.(float64); ok {
+					threshold = tFloat
+				}
+			}
+			filters = append(filters, filter.NewBlurFilter(threshold))
 		case "duplicate":
 			threshold := 10
 			if t, ok := fs.Params["threshold"]; ok {
@@ -142,6 +151,24 @@ func (m *StreamManager) buildPipeline(cfg config.StreamConfig) *filter.FilterPip
 				}
 			}
 			filters = append(filters, filter.NewDuplicateFilter(threshold))
+		case "tracker":
+			trackerType := "face"
+			if t, ok := fs.Params["tracker_type"]; ok {
+				if ts, ok := t.(string); ok {
+					trackerType = ts
+				}
+			}
+			switch trackerType {
+			case "face":
+				ft, err := tracker.NewFaceTracker(tracker.FaceTrackerConfig{})
+				if err != nil {
+					slog.Warn("failed to create face tracker", "error", err)
+					continue
+				}
+				filters = append(filters, filter.NewTrackerFilter(ft, 1))
+			default:
+				filters = append(filters, filter.NewTrackerFilter(&tracker.ObjectTracker{}, 1))
+			}
 		case "noop":
 			filters = append(filters, &filter.NoopFilter{})
 		default:

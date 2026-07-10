@@ -1,6 +1,10 @@
 package filter
 
-import "image"
+import (
+	"image"
+
+	"github.com/craftlabs/video-stream-capture-engine/internal/tracker"
+)
 
 type FilterPipeline struct {
 	filters []FrameFilter
@@ -25,4 +29,16 @@ func (p *FilterPipeline) Process(frame image.Image, meta FrameMeta) (*FilteredFr
 	}
 
 	return &current, true
+}
+
+func (p *FilterPipeline) Detections() []tracker.Detection {
+	for _, f := range p.filters {
+		if tf, ok := f.(*TrackerFilter); ok {
+			dets := tf.Detections()
+			if len(dets) > 0 {
+				return dets
+			}
+		}
+	}
+	return nil
 }
