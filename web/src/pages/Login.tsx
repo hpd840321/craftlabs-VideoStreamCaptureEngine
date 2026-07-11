@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { login } from '../api/auth';
 
 export default function Login() {
   const [username, setUsername] = useState('');
@@ -7,13 +8,14 @@ export default function Login() {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (username === 'admin' && password === 'admin') {
-      localStorage.setItem('token', 'mock-jwt-token');
+    try {
+      const res = await login(username, password);
+      localStorage.setItem('token', res.token);
       navigate('/');
-    } else {
-      setError('用户名或密码错误，请重试');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '登录失败');
     }
   };
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"embed"
 	"flag"
+	"fmt"
 	"io/fs"
 	"log/slog"
 	"net/http"
@@ -14,8 +15,10 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/craftlabs/video-stream-capture-engine/internal/api"
 	"github.com/craftlabs/video-stream-capture-engine/internal/config"
 	"github.com/craftlabs/video-stream-capture-engine/internal/manager"
+	"github.com/craftlabs/video-stream-capture-engine/internal/store"
 )
 
 //go:embed dist
@@ -33,10 +36,37 @@ func main() {
 		os.Exit(1)
 	}
 
+	applyEnvOverrides(cfg)
+
 	mgr, err := manager.NewStreamManager(cfg)
 	if err != nil {
 		slog.Error("failed to create stream manager", "error", err)
 		os.Exit(1)
+	}
+
+	// Initialize PostgreSQL connection
+	db, err := store.NewDB(context.Background(), cfg.Database.DSN())
+	if err != nil {
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	if err := db.Migrate(context.Background()); err != nil {
+		slog.Error("database migration failed", "error", err)
+		os.Exit(1)
+	}
+
+	// Create API server
+	jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		jwtSecret = "dev-secret-change-in-production"
+	}
+	apiServer := api.NewServer(cfg, mgr, db, jwtSecret)
+
+	// Initialize admin user
+	if err := apiServer.InitAdminUser(); err != nil {
+		slog.Error("failed to init admin user", "error", err)
 	}
 
 	mux := http.NewServeMux()
@@ -45,6 +75,9 @@ func main() {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
+
+	// Register API routes
+	apiServer.RegisterRoutes(mux)
 
 	// Serve embedded frontend SPA
 	distFS, err := fs.Sub(webAssets, "dist")
@@ -90,4 +123,22 @@ func main() {
 	server.Shutdown(shutdownCtx)
 
 	slog.Info("shutdown complete")
+}
+
+func applyEnvOverrides(cfg *config.Config) {
+	if v := os.Getenv("DB_HOST"); v != "" {
+		cfg.Database.Host = v
+	}
+	if v := os.Getenv("DB_PORT"); v != "" {
+		fmt.Sscanf(v, "%d", &cfg.Database.Port)
+	}
+	if v := os.Getenv("DB_USER"); v != "" {
+		cfg.Database.User = v
+	}
+	if v := os.Getenv("DB_PASSWORD"); v != "" {
+		cfg.Database.Password = v
+	}
+	if v := os.Getenv("DB_NAME"); v != "" {
+		cfg.Database.DBName = v
+	}
 }
