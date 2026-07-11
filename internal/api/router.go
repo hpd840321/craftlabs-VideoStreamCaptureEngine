@@ -15,18 +15,18 @@ import (
 )
 
 type Server struct {
-	cfg     *config.Config
-	mgr     *manager.StreamManager
-	db      *store.DB
-	jwtKey  []byte
-	mu      sync.RWMutex
+	cfg    *config.Config
+	mgr    *manager.StreamManager
+	db     Store
+	jwtKey []byte
+	mu     sync.RWMutex
 }
 
 func NewServer(cfg *config.Config, mgr *manager.StreamManager, db *store.DB, jwtSecret string) *Server {
 	return &Server{
 		cfg:    cfg,
 		mgr:    mgr,
-		db:     db,
+		db:     newStoreDBWrapper(db),
 		jwtKey: []byte(jwtSecret),
 	}
 }
