@@ -160,7 +160,38 @@ func (m *StreamManager) buildPipeline(cfg config.StreamConfig) *filter.FilterPip
 			}
 			switch trackerType {
 			case "face":
-				ft, err := tracker.NewFaceTracker(tracker.FaceTrackerConfig{})
+				ftCfg := tracker.FaceTrackerConfig{}
+				if v, ok := fs.Params["min_confidence"]; ok {
+					if f, ok := v.(float64); ok {
+						ftCfg.MinConfidence = f
+					}
+				}
+				if v, ok := fs.Params["detect_every"]; ok {
+					if n, ok := v.(int); ok {
+						ftCfg.DetectEvery = n
+					}
+				}
+				if v, ok := fs.Params["min_size"]; ok {
+					if n, ok := v.(int); ok {
+						ftCfg.MinSize = n
+					}
+				}
+				if v, ok := fs.Params["max_size"]; ok {
+					if n, ok := v.(int); ok {
+						ftCfg.MaxSize = n
+					}
+				}
+				if v, ok := fs.Params["track_max_lost"]; ok {
+					if n, ok := v.(int); ok {
+						ftCfg.TrackMaxLost = n
+					}
+				}
+				if v, ok := fs.Params["iou_threshold"]; ok {
+					if f, ok := v.(float64); ok {
+						ftCfg.IOUThreshold = f
+					}
+				}
+				ft, err := tracker.NewFaceTracker(ftCfg)
 				if err != nil {
 					slog.Warn("failed to create face tracker", "error", err)
 					continue
