@@ -37,7 +37,7 @@ frontend-lint:
 frontend-build:
 	cd web && npm ci && npm run build
 
-docker-build:
+docker-build: frontend-build
 	docker build -f deploy/Dockerfile -t $(APP):$(VERSION) .
 
 ci: lint frontend-lint frontend-build build test
