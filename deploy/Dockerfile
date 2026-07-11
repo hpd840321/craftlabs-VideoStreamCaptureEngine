@@ -13,8 +13,10 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-COPY --from=frontend-builder /app/web/dist ./web/dist
-RUN CGO_ENABLED=0 go build -o /engine ./cmd/engine/
+ARG VERSION=dev
+ARG COMMIT=unknown
+COPY --from=frontend-builder /app/web/dist ./cmd/engine/dist
+RUN CGO_ENABLED=0 go build -ldflags "-X main.version=$VERSION -X main.commit=$COMMIT" -o /engine ./cmd/engine/
 
 # Stage 3: Runtime
 FROM alpine:3.20

@@ -16,6 +16,9 @@ jobs:
         with:
           go-version: '1.25'
 
+      - name: Install golangci-lint
+        run: curl -sSfL https://raw.githubusercontent.com/golangci-lint/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.64.8
+
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -63,6 +66,9 @@ jobs:
           context: .
           file: deploy/Dockerfile
           push: true
+          build-args: |
+            VERSION=${{ github.sha }}
+            COMMIT=${{ github.sha }}
           tags: |
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ github.sha }}
