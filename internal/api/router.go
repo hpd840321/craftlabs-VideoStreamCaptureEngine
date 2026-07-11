@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/craftlabs/video-stream-capture-engine/internal/auth"
 	"github.com/craftlabs/video-stream-capture-engine/internal/config"
@@ -18,6 +19,7 @@ type Server struct {
 	mgr     *manager.StreamManager
 	db      *store.DB
 	jwtKey  []byte
+	mu      sync.RWMutex
 }
 
 func NewServer(cfg *config.Config, mgr *manager.StreamManager, db *store.DB, jwtSecret string) *Server {
@@ -32,7 +34,7 @@ func NewServer(cfg *config.Config, mgr *manager.StreamManager, db *store.DB, jwt
 func (s *Server) RegisterRoutes(mux *http.ServeMux) {
 	// Public
 	mux.HandleFunc("/api/login", s.handleLogin)
-	mux.HandleFunc("/api/refresh", s.handleRefresh)
+	mux.HandleFunc("/api/refresh", s.authWrap(s.handleRefresh))
 
 	// Protected
 	protected := s.authMiddleware(http.DefaultServeMux)

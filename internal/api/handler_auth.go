@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"os"
@@ -71,5 +72,5 @@ func (s *Server) InitAdminUser() error {
 	if err != nil {
 		return err
 	}
-	return s.db.CreateUser(nil, "admin", hash)
+	return s.db.CreateUser(context.Background(), "admin", hash)
 }

@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"sync"
 
 	"github.com/craftlabs/video-stream-capture-engine/internal/config"
 )
@@ -85,10 +84,9 @@ func (s *Server) handleStreamByID(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) listStreams(w http.ResponseWriter, r *http.Request) {
-	page := 1
-	size := 20
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 
-	var mu sync.Mutex
 	items := make([]streamInfo, 0)
 	for _, sc := range s.cfg.Streams {
 		info := streamInfo{
@@ -106,12 +104,8 @@ func (s *Server) listStreams(w http.ResponseWriter, r *http.Request) {
 		if info.OutputTopic == "" {
 			info.OutputTopic = sc.ID
 		}
-		mu.Lock()
 		items = append(items, info)
-		mu.Unlock()
 	}
-	_ = page
-	_ = size
 
 	writeJSON(w, 0, "ok", streamListResponse{
 		Total: len(items),
@@ -122,6 +116,8 @@ func (s *Server) listStreams(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) getStream(w http.ResponseWriter, r *http.Request, id string) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
 	for _, sc := range s.cfg.Streams {
 		if sc.ID == id {
 			info := streamInfo{
@@ -156,12 +152,16 @@ func (s *Server) createStream(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 400, "invalid body", nil)
 		return
 	}
+	s.mu.Lock()
 	s.cfg.Streams = append(s.cfg.Streams, sc)
+	s.mu.Unlock()
 	slog.Info("stream created", "id", sc.ID)
 	writeJSON(w, 0, "created", sc)
 }
 
 func (s *Server) updateStream(w http.ResponseWriter, r *http.Request, id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	for i, sc := range s.cfg.Streams {
 		if sc.ID == id {
 			var updated config.StreamConfig
@@ -179,6 +179,8 @@ func (s *Server) updateStream(w http.ResponseWriter, r *http.Request, id string)
 }
 
 func (s *Server) deleteStream(w http.ResponseWriter, r *http.Request, id string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	for i, sc := range s.cfg.Streams {
 		if sc.ID == id {
 			s.cfg.Streams = append(s.cfg.Streams[:i], s.cfg.Streams[i+1:]...)
@@ -212,6 +214,8 @@ func (s *Server) handleBatchImport(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, 400, "invalid body", nil)
 		return
 	}
+	s.mu.Lock()
 	s.cfg.Streams = append(s.cfg.Streams, streams...)
+	s.mu.Unlock()
 	writeJSON(w, 0, "imported", map[string]int{"imported": len(streams)})
 }
