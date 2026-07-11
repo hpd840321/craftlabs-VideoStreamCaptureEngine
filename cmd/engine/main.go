@@ -24,6 +24,15 @@ import (
 //go:embed dist
 var webAssets embed.FS
 
+var (
+	version = "dev"
+	commit  = "unknown"
+)
+
+func init() {
+	slog.Info("engine build info", "version", version, "commit", commit)
+}
+
 func main() {
 	configPath := flag.String("config", "config.yaml", "path to config file")
 	flag.Parse()

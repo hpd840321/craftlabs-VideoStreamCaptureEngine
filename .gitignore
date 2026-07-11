@@ -14,6 +14,7 @@ Thumbs.db
 # Build
 /dist/
 /node_modules/
+/coverage/
 
 # Brainstorm artifacts
 .superpowers/

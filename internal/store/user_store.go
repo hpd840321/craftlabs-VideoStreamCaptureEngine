@@ -3,13 +3,14 @@ package store
 import (
 	"context"
 	"fmt"
+	"time"
 )
 
 type User struct {
 	ID           int    `json:"id"`
 	Username     string `json:"username"`
 	PasswordHash string `json:"-"`
-	CreatedAt    string `json:"created_at"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 func (db *DB) GetUserByUsername(ctx context.Context, username string) (*User, error) {
