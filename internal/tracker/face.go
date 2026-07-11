@@ -86,6 +86,7 @@ func (ft *FaceTracker) Track(frame image.Image) []Detection {
 
 	gray := toGrayImage(frame)
 	if ft.lastGray != nil && !frameChanged(ft.lastGray, gray) && ft.lastDetections != nil {
+		ft.lastGray = gray
 		return ft.lastDetections
 	}
 	ft.lastGray = gray

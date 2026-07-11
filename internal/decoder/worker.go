@@ -136,9 +136,13 @@ func (w *DecoderWorker) processFrame(img image.Image, ts time.Time) error {
 		if outFrame.Metadata == nil {
 			outFrame.Metadata = make(map[string]string)
 		}
-		data, _ := json.Marshal(dets)
-		outFrame.Metadata["detections"] = string(data)
-		outFrame.Metadata["detection_count"] = fmt.Sprintf("%d", len(dets))
+		data, err := json.Marshal(dets)
+		if err != nil {
+			slog.Warn("failed to marshal detections", "stream", w.streamID, "error", err)
+		} else {
+			outFrame.Metadata["detections"] = string(data)
+			outFrame.Metadata["detection_count"] = fmt.Sprintf("%d", len(dets))
+		}
 	}
 
 	return w.output.Write(outFrame)
