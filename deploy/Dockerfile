@@ -7,14 +7,14 @@ COPY web/ ./
 RUN npm run build
 
 # Stage 2: Build Go binary
-FROM golang:1.22-alpine AS go-builder
-RUN apk add --no-cache gcc musl-dev
+FROM golang:1.25-alpine AS go-builder
+RUN apk add --no-cache ca-certificates
 WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 COPY --from=frontend-builder /app/web/dist ./web/dist
-RUN CGO_ENABLED=1 go build -o /engine ./cmd/engine/
+RUN CGO_ENABLED=0 go build -o /engine ./cmd/engine/
 
 # Stage 3: Runtime
 FROM alpine:3.20
