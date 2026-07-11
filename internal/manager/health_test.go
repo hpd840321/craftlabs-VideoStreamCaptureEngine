@@ -66,3 +66,44 @@ func TestHealthMonitor_UnhealthyStreams(t *testing.T) {
 		t.Errorf("expected 2 unhealthy, got %d: %v", len(unhealthy), unhealthy)
 	}
 }
+
+func TestHealthMonitor_ConcurrentAccess(t *testing.T) {
+	hm := NewHealthMonitor(1 * time.Second)
+	hm.Register("stream-1")
+
+	// Concurrent heartbeats and checks
+	done := make(chan bool)
+	go func() {
+		for i := 0; i < 100; i++ {
+			hm.Heartbeat("stream-1")
+		}
+		done <- true
+	}()
+	go func() {
+		for i := 0; i < 100; i++ {
+			hm.Check("stream-1")
+		}
+		done <- true
+	}()
+	<-done
+	<-done
+
+	if hm.Check("stream-1") != StatusHealthy {
+		t.Error("should be healthy after concurrent access")
+	}
+}
+
+func TestHealthMonitor_DuplicateRegister(t *testing.T) {
+	hm := NewHealthMonitor(1 * time.Second)
+	hm.Register("stream-1")
+	hm.Register("stream-1") // should not panic
+
+	if hm.Check("stream-1") != StatusHealthy {
+		t.Error("should be healthy after duplicate register")
+	}
+}
+
+func TestHealthMonitor_UnregisterNonexistent(t *testing.T) {
+	hm := NewHealthMonitor(1 * time.Second)
+	hm.Unregister("nonexistent") // should not panic
+}
